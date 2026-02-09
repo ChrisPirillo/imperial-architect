@@ -1,0 +1,1593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Imperial Architect - Procedural Sci-Fi Surface Generator</title>
+    
+    <!-- SEO & Metadata -->
+    <meta name="description" content="Imperial Architect is a browser-based procedural generation tool. Create hyper-detailed, sci-fi industrial surfaces, greeble textures, and cyberpunk backgrounds. Export unique 4K wallpapers instantly.">
+    <meta name="keywords" content="imperial architect, procedural generation, sci-fi texture generator, cyberpunk wallpaper, greeble generator, digital art tool, 4k background creator, canvas art, generative art">
+    <meta name="author" content="Chris Pirillo">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://pirillo.com/arcade/imperial-architect.html">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://pirillo.com/arcade/imperial-architect.html">
+    <meta property="og:title" content="Imperial Architect">
+    <meta property="og:description" content="Generate infinite, high-density sci-fi industrial surfaces. Create and export 4K cyberpunk wallpapers in your browser.">
+    <meta property="og:image" content="https://pirillo.com/arcade/images/imperial-architect.png">
+    <meta property="og:image:alt" content="A procedurally generated sci-fi industrial surface texture.">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://pirillo.com/arcade/imperial-architect.html">
+    <meta name="twitter:title" content="Imperial Architect">
+    <meta name="twitter:description" content="Generate infinite, high-density sci-fi industrial surfaces. Create and export 4K cyberpunk wallpapers in your browser.">
+    <meta name="twitter:image" content="https://pirillo.com/arcade/images/imperial-architect.png">
+    <meta name="twitter:creator" content="@ChrisPirillo">
+
+    <!-- Performance: Preconnect & Hints -->
+    <link rel="preconnect" href="https://cdn.tailwindcss.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="https://www.googletagmanager.com">
+
+    <!-- Styles: CSS & Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Analytics (GA4) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-1CQ4D3VQ3L"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-1CQ4D3VQ3L');
+    </script>
+
+    <!-- Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Imperial Architect",
+      "url": "https://pirillo.com/arcade/imperial-architect.html",
+      "description": "A procedural sci-fi surface generator that creates high-density industrial textures and wallpapers.",
+      "author": {
+        "@type": "Person",
+        "name": "Chris Pirillo",
+        "url": "https://pirillo.com"
+      },
+      "applicationCategory": "DesignApplication",
+      "operatingSystem": "Any",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "image": "https://pirillo.com/arcade/images/imperial-architect.png"
+    }
+    </script>
+
+    <style>
+        /* Removed @import to prevent blocking; loaded via <link> above */
+
+        :root {
+            --primary: #66fcf1;
+            --secondary: #45a29e;
+            --dark: #0b0c10;
+            --panel: rgba(11, 12, 16, 0.95);
+        }
+
+        body {
+            background-color: var(--dark);
+            color: #c5c6c7;
+            font-family: 'Share Tech Mono', monospace;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* --- Canvas & Layout --- */
+        #canvas-wrapper {
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            transition: opacity 0.4s ease-in-out;
+        }
+        
+        #canvas-wrapper.fade-out {
+            opacity: 0;
+        }
+
+        /* --- UI Components --- */
+        .glass-panel {
+            background: var(--panel);
+            backdrop-filter: blur(12px);
+            border: 1px solid #1f2833;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Hamburger Menu */
+        #menu-toggle {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 50;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--secondary);
+            background: rgba(0,0,0,0.5);
+            transition: all 0.3s ease;
+        }
+        
+        #menu-toggle:hover {
+            box-shadow: 0 0 15px var(--secondary);
+        }
+
+        #menu-toggle span {
+            display: block;
+            width: 20px;
+            height: 2px;
+            background: var(--primary);
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        #menu-toggle span::before, #menu-toggle span::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 2px;
+            background: var(--primary);
+            transition: all 0.3s;
+        }
+        #menu-toggle span::before { top: -6px; }
+        #menu-toggle span::after { top: 6px; }
+
+        #menu-toggle.active span { background: transparent; }
+        #menu-toggle.active span::before { top: 0; transform: rotate(45deg); }
+        #menu-toggle.active span::after { top: 0; transform: rotate(-45deg); }
+
+        /* Settings Panel */
+        #settings-panel {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 380px;
+            max-width: 100vw;
+            z-index: 40;
+            transform: translateX(-100%);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            padding: 80px 20px 20px 20px;
+            overflow-y: auto;
+            border-right: 1px solid var(--secondary);
+        }
+
+        #settings-panel.open {
+            transform: translateX(0);
+        }
+
+        /* Custom Range Slider */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+            margin: 10px 0;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 14px;
+            width: 14px;
+            background: var(--primary);
+            cursor: pointer;
+            margin-top: -5px;
+            box-shadow: 0 0 8px var(--primary);
+            border: 1px solid #000;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 2px;
+            cursor: pointer;
+            background: #1f2833;
+        }
+
+        /* Buttons */
+        .cyber-btn {
+            background: transparent;
+            border: 1px solid var(--secondary);
+            color: var(--primary);
+            padding: 10px;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .cyber-btn:hover {
+            background: rgba(69, 162, 158, 0.2);
+            box-shadow: 0 0 15px rgba(102, 252, 241, 0.2);
+            text-shadow: 0 0 5px var(--primary);
+        }
+
+        .cyber-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* Control Group */
+        .control-group {
+            margin-bottom: 24px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid #1f2833;
+        }
+        .control-label {
+            display: flex;
+            justify-content: space-between;
+            color: var(--secondary);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        /* Overlays */
+        #crt-layer {
+            position: absolute; inset: 0; z-index: 10;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        #crt-layer.disabled {
+            opacity: 0;
+        }
+
+        .scanlines {
+            background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.2));
+            background-size: 100% 4px;
+            pointer-events: none;
+            position: absolute; inset: 0; z-index: 10;
+        }
+        .vignette {
+            background: radial-gradient(circle, rgba(0,0,0,0) 50%, rgba(0,0,0,0.8) 100%);
+            pointer-events: none;
+            position: absolute; inset: 0; z-index: 10;
+        }
+        .noise {
+            opacity: 0.05;
+            pointer-events: none;
+            position: absolute; inset: 0; z-index: 9;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+        
+        /* Loading Overlay */
+        #loader {
+            position: absolute; inset: 0; z-index: 60;
+            background: #000;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            transition: opacity 0.5s;
+            pointer-events: none;
+        }
+        #loader.hidden { opacity: 0; }
+        
+        /* Auto Advance Indicator */
+        #auto-indicator {
+            position: absolute; top: 28px; left: 80px;
+            color: var(--primary); font-size: 0.7rem;
+            z-index: 45; opacity: 0; transition: opacity 0.3s;
+            text-shadow: 0 0 5px var(--primary);
+            pointer-events: none;
+        }
+        #auto-indicator.visible { opacity: 1; }
+
+    </style>
+</head>
+<body>
+
+    <!-- --- UI STRUCTURE --- -->
+
+    <!-- Hamburger Toggle (Nav Control) -->
+    <nav>
+        <div id="menu-toggle" role="button" aria-label="Toggle Settings Menu" tabindex="0">
+            <span></span>
+        </div>
+    </nav>
+
+    <!-- Auto-Advance Indicator -->
+    <div id="auto-indicator" aria-live="polite">AUTO-CYCLE ACTIVE</div>
+
+    <!-- Settings Menu (Semantic Aside) -->
+    <aside id="settings-panel" class="glass-panel custom-scrollbar" aria-label="Generator Settings">
+        <header class="mb-6">
+            <h1 class="text-xl text-white tracking-widest uppercase font-bold">Imperial Architect</h1>
+            <p class="text-xs text-gray-500 font-mono">Hyper-Density Generator</p>
+        </header>
+
+        <!-- Global Settings -->
+        <section class="control-group">
+            <h2 class="text-white text-xs font-bold mb-4 uppercase border-l-2 border-[#66fcf1] pl-2">Structure</h2>
+            
+            <div>
+                <label for="inp-scale" class="control-label"><span>Tile Scale</span><span id="val-scale">150</span></label>
+                <input type="range" id="inp-scale" min="30" max="300" value="150" aria-valuemin="30" aria-valuemax="300" aria-valuenow="150">
+            </div>
+            
+            <div>
+                <label for="inp-depth" class="control-label"><span>Recursion Depth</span><span id="val-depth">Max</span></label>
+                <input type="range" id="inp-depth" min="2" max="8" value="6" aria-valuemin="2" aria-valuemax="8" aria-valuenow="6">
+            </div>
+
+            <div>
+                <label for="inp-complexity" class="control-label"><span>Complexity</span><span id="val-complexity">90%</span></label>
+                <input type="range" id="inp-complexity" min="0" max="100" value="90" aria-valuemin="0" aria-valuemax="100" aria-valuenow="90">
+            </div>
+
+            <div>
+                <label for="inp-outline" class="control-label"><span>Outline Width</span><span id="val-outline">0.2px</span></label>
+                <input type="range" id="inp-outline" min="0" max="1" value="0.2" step="0.1" aria-valuemin="0" aria-valuemax="1" aria-valuenow="0.2">
+            </div>
+        </section>
+
+        <!-- Flavor -->
+         <section class="control-group">
+            <h2 class="text-white text-xs font-bold mb-4 uppercase border-l-2 border-[#66fcf1] pl-2">Style Bias</h2>
+            
+            <div>
+                <label for="inp-industrial" class="control-label"><span>Industrial Factor</span><span id="val-industrial">50%</span></label>
+                <input type="range" id="inp-industrial" min="0" max="100" value="50" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50">
+            </div>
+
+             <div>
+                <label for="inp-micro" class="control-label"><span>Micro-Detail</span><span id="val-micro">85%</span></label>
+                <input type="range" id="inp-micro" min="0" max="100" value="85" aria-valuemin="0" aria-valuemax="100" aria-valuenow="85">
+            </div>
+
+             <div>
+                <label for="inp-roughness" class="control-label"><span>Surface Roughness</span><span id="val-roughness">40%</span></label>
+                <input type="range" id="inp-roughness" min="0" max="100" value="40" aria-valuemin="0" aria-valuemax="100" aria-valuenow="40">
+            </div>
+        </section>
+
+        <!-- Aesthetics -->
+        <section class="control-group">
+            <h2 class="text-white text-xs font-bold mb-4 uppercase border-l-2 border-[#66fcf1] pl-2">Visuals</h2>
+            
+            <div>
+                <label for="inp-bright" class="control-label"><span>Base Brightness</span><span id="val-bright">30%</span></label>
+                <input type="range" id="inp-bright" min="10" max="80" value="30" aria-valuemin="10" aria-valuemax="80" aria-valuenow="30">
+            </div>
+
+             <div>
+                <label for="inp-variance" class="control-label"><span>Chaos/Color</span><span id="val-variance">65%</span></label>
+                <input type="range" id="inp-variance" min="0" max="100" value="65" aria-valuemin="0" aria-valuemax="100" aria-valuenow="65">
+            </div>
+
+            <div>
+                <label for="inp-shadow" class="control-label"><span>Shadow Depth</span><span id="val-shadow">70%</span></label>
+                <input type="range" id="inp-shadow" min="0" max="100" value="70" aria-valuemin="0" aria-valuemax="100" aria-valuenow="70">
+            </div>
+            
+            <div>
+                <label for="inp-hue" class="control-label"><span>Hue Shift</span><span id="val-hue">210</span></label>
+                <input type="range" id="inp-hue" min="0" max="360" value="210" aria-valuemin="0" aria-valuemax="360" aria-valuenow="210">
+            </div>
+
+            <div class="flex items-center justify-between mt-4">
+                <label for="inp-crt" class="text-xs text-gray-400 uppercase tracking-widest">CRT FX</label>
+                <input type="checkbox" id="inp-crt" class="accent-[#66fcf1]" checked>
+            </div>
+        </section>
+
+        <!-- Auto-Advance -->
+        <section class="control-group">
+            <h2 class="text-white text-xs font-bold mb-4 uppercase border-l-2 border-[#66fcf1] pl-2">Automation</h2>
+            
+            <div class="flex items-center justify-between mb-2">
+                <label for="inp-auto" class="text-xs text-gray-400">Auto-Cycle</label>
+                <input type="checkbox" id="inp-auto" class="accent-[#66fcf1]">
+            </div>
+            
+            <div>
+                <label for="inp-interval" class="control-label"><span>Interval (sec)</span><span id="val-interval">3 sec</span></label>
+                <input type="range" id="inp-interval" min="1" max="10" value="3" aria-valuemin="1" aria-valuemax="10" aria-valuenow="3">
+            </div>
+        </section>
+
+        <!-- Actions -->
+        <div class="flex flex-col gap-3 mt-4">
+            <button id="btn-random" class="cyber-btn w-full">Randomize All</button>
+            <button id="btn-reset" class="cyber-btn w-full">Reset Defaults</button>
+            <button id="btn-export" class="cyber-btn w-full font-bold text-white bg-[#1f2833]">Export 4K Wallpaper</button>
+        </div>
+        
+        <div class="mt-6 pt-4 border-t border-gray-800 text-[10px] text-gray-600 font-mono text-center">
+            SYSTEM READY. CLICK BACKGROUND TO REFRESH.
+        </div>
+    </aside>
+
+    <!-- Canvas Container (Main Content) -->
+    <main id="canvas-wrapper" role="main" aria-label="Procedural Surface Canvas">
+        <canvas id="surface" aria-label="Procedurally generated sci-fi texture surface"></canvas>
+        <div id="crt-layer" aria-hidden="true">
+            <div class="scanlines"></div>
+            <div class="noise"></div>
+            <div class="vignette"></div>
+        </div>
+    </main>
+    
+    <!-- Loader -->
+    <div id="loader" role="status" aria-live="assertive">
+        <div class="w-12 h-12 border-t-2 border-[#66fcf1] rounded-full animate-spin mb-4"></div>
+        <div class="text-[#66fcf1] text-xs tracking-[0.3em] animate-pulse">GENERATING MESH</div>
+    </div>
+
+    <!-- --- LOGIC --- -->
+    <script>
+        /**
+         * IMPERIAL SURFACE ARCHITECT: ARCHITECT X
+         * Single-file procedural generation engine.
+         */
+
+        // --- STATE & CONFIG ---
+        const DEFAULTS = {
+            scale: 150,
+            depth: 6,
+            complexity: 0.9,
+            industrial: 0.5,
+            microDetail: 0.85,
+            roughness: 0.4,
+            brightness: 30,
+            colorVariance: 0.65,
+            shadow: 0.7,
+            hue: 210,
+            outlineWidth: 0.2, // Much thinner default
+            crt: true,
+            autoAdvance: false,
+            interval: 3
+        };
+
+        let config = { ...DEFAULTS };
+        let autoTimer = null;
+        let isTransitioning = false;
+        
+        // DOM Elements
+        // Loaded in init() to ensure safety
+        let canvas, ctx, wrapper, menuPanel, menuToggle, autoIndicator, loader, crtLayer;
+
+        // --- CORE UTILS ---
+        const rand = (min, max) => Math.random() * (max - min) + min;
+        const randInt = (min, max) => Math.floor(rand(min, max));
+        const chance = (prob) => Math.random() < prob;
+        const clamp = (val, min, max) => Math.min(Math.max(val, min), max);
+
+        function getColor(brightnessOffset = 0, opacity = 1) {
+            // High variance for "lived in" look + Random accent colors
+            let h = config.hue;
+            let s = 5;
+            let l = config.brightness + brightnessOffset;
+
+            // Chaos Engine: Color Shifts
+            if (chance(0.05 * config.colorVariance)) {
+                // Complementary/Accent Shift
+                h = (h + 180 + rand(-30, 30)) % 360; 
+                s = rand(20, 60); // Spiky saturation
+            } else {
+                // Standard Drift
+                h = (h + rand(-15, 15) * config.colorVariance) % 360;
+            }
+
+            // Lightness Chaos
+            const variance = (Math.random() - 0.5) * (config.colorVariance * 30); 
+            l = clamp(l + variance, 2, 98);
+
+            return `hsla(${h}, ${s}%, ${l}%, ${opacity})`;
+        }
+
+        // --- SAFE DRAWING (BOUNDARY ENFORCEMENT) ---
+        function safeDraw(ctx, x, y, w, h, drawFn) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(x, y, w, h);
+            ctx.clip();
+            drawFn();
+            ctx.restore();
+        }
+        
+        // --- DRAWING PRIMITIVES ---
+
+        function drawBorder(ctx, x, y, w, h) {
+            if (config.outlineWidth > 0) {
+                ctx.lineWidth = config.outlineWidth;
+                ctx.strokeStyle = 'rgba(0,0,0,0.6)';
+                ctx.strokeRect(x, y, w, h);
+            }
+        }
+
+        function drawPlate(ctx, x, y, w, h, raised = true, depthIdx = 1) {
+            if (w < 1 || h < 1) return;
+            
+            // Fill
+            const color = raised ? getColor(depthIdx * 2) : getColor(-10);
+            ctx.fillStyle = color;
+            ctx.fillRect(x, y, w, h);
+
+            // Bevels
+            const highlight = raised ? `rgba(255,255,255,${0.1 + (depthIdx*0.04)})` : `rgba(0,0,0,0.5)`;
+            const shadow = raised ? `rgba(0,0,0,${0.3 + (depthIdx*0.1)})` : `rgba(255,255,255,0.05)`;
+            const bs = Math.min(2, Math.min(w, h) * 0.1); 
+
+            // Top-Left Light
+            ctx.fillStyle = highlight;
+            ctx.beginPath();
+            ctx.moveTo(x, y); ctx.lineTo(x+w, y); ctx.lineTo(x+w-bs, y+bs); 
+            ctx.lineTo(x+bs, y+bs); ctx.lineTo(x+bs, y+h-bs); ctx.lineTo(x, y+h);
+            ctx.fill();
+
+            // Bottom-Right Shadow
+            ctx.fillStyle = shadow;
+            ctx.beginPath();
+            ctx.moveTo(x+w, y+h); ctx.lineTo(x, y+h); ctx.lineTo(x+bs, y+h-bs);
+            ctx.lineTo(x+w-bs, y+h-bs); ctx.lineTo(x+w-bs, y+bs); ctx.lineTo(x+w, y);
+            ctx.fill();
+
+            // Note: Outline removed from here to prevent double-borders on internals
+            
+            // --- MICRO DETAIL ENGINE ---
+            if (raised && w > 8 && h > 8) {
+                if (chance(config.microDetail)) {
+                    if (chance(0.3)) drawRivets(ctx, x, y, w, h);
+                    if (chance(config.roughness)) drawSurfaceScoring(ctx, x, y, w, h);
+                    if (chance(0.1)) drawAlienText(ctx, x, y, w, h);
+                    if (chance(0.05)) {
+                        // Tiny embedded light
+                        ctx.fillStyle = chance(0.5) ? '#e74c3c' : '#66fcf1';
+                        const lx = chance(0.5) ? x + 4 : x + w - 6;
+                        const ly = chance(0.5) ? y + 4 : y + h - 6;
+                        ctx.fillRect(lx, ly, 2, 2);
+                    }
+                }
+            }
+        }
+
+        // --- NEW GREEBLE TYPES (10 Types) ---
+
+        // 1. Energy Coil
+        function drawEnergyCoil(ctx, x, y, w, h) {
+            safeDraw(ctx, x, y, w, h, () => {
+                drawPlate(ctx, x, y, w, h, false);
+                const coils = randInt(5, 12);
+                const isVert = h > w;
+                const step = (isVert ? h : w) / coils;
+                
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = chance(0.5) ? '#66fcf1' : '#ff0055'; // Energy color
+                ctx.shadowBlur = 5;
+                ctx.shadowColor = ctx.strokeStyle;
+                
+                ctx.beginPath();
+                const amp = Math.min(w,h) * 0.3;
+                const cx = x + w/2;
+                const cy = y + h/2;
+
+                for(let i=0; i<=coils; i++) {
+                    const progress = i * step;
+                    if(isVert) {
+                         const wave = Math.sin(i * 2) * amp;
+                         if(i===0) ctx.moveTo(cx + wave, y + progress);
+                         else ctx.lineTo(cx + wave, y + progress);
+                    } else {
+                         const wave = Math.sin(i * 2) * amp;
+                         if(i===0) ctx.moveTo(x + progress, cy + wave);
+                         else ctx.lineTo(x + progress, cy + wave);
+                    }
+                }
+                ctx.stroke();
+                ctx.shadowBlur = 0; // Reset
+            });
+        }
+
+        // 2. Radar Dish
+        function drawRadarDish(ctx, x, y, w, h) {
+             safeDraw(ctx, x, y, w, h, () => {
+                drawPlate(ctx, x, y, w, h, true);
+                const cx = x + w/2, cy = y + h/2;
+                const r = Math.min(w,h) * 0.4;
+                
+                // Dish
+                ctx.fillStyle = '#222';
+                ctx.beginPath(); ctx.ellipse(cx, cy, r, r*0.6, rand(0, Math.PI), 0, Math.PI*2); ctx.fill();
+                ctx.lineWidth = 1; ctx.strokeStyle = '#555'; ctx.stroke();
+
+                // Spike
+                ctx.beginPath(); 
+                ctx.moveTo(cx, cy); 
+                ctx.lineTo(cx + rand(-r, r), cy - r);
+                ctx.strokeStyle = getColor(30);
+                ctx.stroke();
+             });
+        }
+
+        // 3. Vent Latches
+        function drawVentLatches(ctx, x, y, w, h) {
+            safeDraw(ctx, x, y, w, h, () => {
+                drawPlate(ctx, x, y, w, h, true);
+                const latchW = Math.min(w,h) * 0.15;
+                const latchH = Math.min(w,h) * 0.15;
+                const margin = 4;
+                
+                ctx.fillStyle = '#111';
+                // 4 corners
+                ctx.fillRect(x+margin, y+margin, latchW, latchH);
+                ctx.fillRect(x+w-margin-latchW, y+margin, latchW, latchH);
+                ctx.fillRect(x+w-margin-latchW, y+h-margin-latchH, latchW, latchH);
+                ctx.fillRect(x+margin, y+h-margin-latchH, latchW, latchH);
+                
+                // Central cross
+                ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+                ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x+w, y+h); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(x+w, y); ctx.lineTo(x, y+h); ctx.stroke();
+            });
+        }
+
+        // 4. Isoline Map
+        function drawIsolineMap(ctx, x, y, w, h) {
+             safeDraw(ctx, x, y, w, h, () => {
+                drawPlate(ctx, x, y, w, h, false);
+                ctx.fillStyle = '#080808'; ctx.fillRect(x+2, y+2, w-4, h-4);
+                
+                ctx.lineWidth = 1;
+                ctx.strokeStyle = getColor(40);
+                
+                const rings = randInt(2, 5);
+                const cx = x + w/2;
+                const cy = y + h/2;
+                const maxR = Math.min(w,h)/2 - 4;
+                
+                for(let i=1; i<=rings; i++) {
+                    const r = (i/rings) * maxR;
+                    // Distorted circle
+                    ctx.beginPath();
+                    for(let a=0; a<=Math.PI*2; a+=0.5) {
+                        const dr = r + rand(-2, 2);
+                        const px = cx + Math.cos(a)*dr;
+                        const py = cy + Math.sin(a)*dr;
+                        if(a===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+                    }
+                    ctx.closePath();
+                    ctx.stroke();
+                }
+             });
+        }
+
+        // 5. Logic Gate
+        function drawLogicGate(ctx, x, y, w, h) {
+            safeDraw(ctx, x, y, w, h, () => {
+                drawPlate(ctx, x, y, w, h, false);
+                ctx.fillStyle = '#050505'; ctx.fillRect(x+2, y+2, w-4, h-4);
+                
+                const nodes = randInt(3, 6);
+                const pos = [];
+                for(let i=0; i<nodes; i++) pos.push({x: x+rand(4, w-4), y: y+rand(4, h-4)});
+                
+                ctx.strokeStyle = getColor(30);
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                for(let i=0; i<nodes-1; i++) {
+                    ctx.moveTo(pos[i].x, pos[i].y);
+                    // Orthogonal routing attempt
+                    if(chance(0.5)) {
+                        ctx.lineTo(pos[i+1].x, pos[i].y);
+                        ctx.lineTo(pos[i+1].x, pos[i+1].y);
+                    } else {
+                        ctx.lineTo(pos[i].x, pos[i+1].y);
+                        ctx.lineTo(pos[i+1].x, pos[i+1].y);
+                    }
+                }
+                ctx.stroke();
+                
+                // Nodes
+                ctx.fillStyle = '#gold';
+                pos.forEach(p => {
+                    ctx.beginPath(); ctx.arc(p.x, p.y, 2, 0, Math.PI*2); ctx.fill();
+                });
+            });
+        }
+
+        // 6. Cooling Fins
+        function drawCoolingFins(ctx, x, y, w, h) {
+            safeDraw(ctx, x, y, w, h, () => {
+                drawPlate(ctx, x, y, w, h, false);
+                const isVert = h > w;
+                const count = randInt(6, 15);
+                const step = (isVert ? h : w) / count;
+                
+                ctx.fillStyle = '#222';
+                for(let i=0; i<count; i++) {
+                    if (i%2===0) {
+                        if(isVert) ctx.fillRect(x, y + i*step, w, step*0.8);
+                        else ctx.fillRect(x + i*step, y, step*0.8, h);
+                    }
+                }
+            });
+        }
+
+        // 7. Warning Chevrons
+        function drawWarningChevrons(ctx, x, y, w, h) {
+             safeDraw(ctx, x, y, w, h, () => {
+                drawPlate(ctx, x, y, w, h, false);
+                ctx.fillStyle = '#333'; ctx.fillRect(x,y,w,h);
+                
+                const dir = chance(0.5); // Up or Down
+                const count = 4;
+                const step = h/count;
+                
+                ctx.fillStyle = '#e67e22';
+                for(let i=0; i<count; i++) {
+                    const cy = y + i*step;
+                    ctx.beginPath();
+                    if(dir) {
+                        ctx.moveTo(x, cy + step);
+                        ctx.lineTo(x + w/2, cy);
+                        ctx.lineTo(x + w, cy + step);
+                        ctx.lineTo(x + w, cy + step - 4);
+                        ctx.lineTo(x + w/2, cy - 4);
+                        ctx.lineTo(x, cy + step - 4);
+                    } else {
+                        ctx.moveTo(x, cy);
+                        ctx.lineTo(x + w/2, cy + step);
+                        ctx.lineTo(x + w, cy);
+                        ctx.lineTo(x + w, cy + 4);
+                        ctx.lineTo(x + w/2, cy + step + 4);
+                        ctx.lineTo(x, cy + 4);
+                    }
+                    ctx.fill();
+                }
+             });
+        }
+
+        // 8. Pressure Valves
+        function drawPressureValves(ctx, x, y, w, h) {
+            safeDraw(ctx, x, y, w, h, () => {
+                drawPlate(ctx, x, y, w, h, true);
+                const cx = x + w/2;
+                const cy = y + h/2;
+                const r = Math.min(w,h) * 0.35;
+                
+                ctx.fillStyle = '#333';
+                ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.fill();
+                
+                // Cross Handle
+                ctx.strokeStyle = '#888';
+                ctx.lineWidth = 3;
+                
+                const rot = rand(0, Math.PI);
+                ctx.save();
+                ctx.translate(cx, cy);
+                ctx.rotate(rot);
+                
+                ctx.beginPath(); ctx.moveTo(-r, 0); ctx.lineTo(r, 0); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(0, -r); ctx.lineTo(0, r); ctx.stroke();
+                
+                // Center nut
+                ctx.fillStyle = '#555';
+                ctx.beginPath(); ctx.arc(0, 0, r*0.3, 0, Math.PI*2); ctx.fill();
+                
+                ctx.restore();
+            });
+        }
+
+        // 9. Data Matrix
+        function drawDataMatrix(ctx, x, y, w, h) {
+             safeDraw(ctx, x, y, w, h, () => {
+                drawPlate(ctx, x, y, w, h, false);
+                ctx.fillStyle = '#000'; ctx.fillRect(x+2, y+2, w-4, h-4);
+                
+                const cols = 5;
+                const rows = 5;
+                const cw = (w-4)/cols;
+                const ch = (h-4)/rows;
+                
+                for(let r=0; r<rows; r++) {
+                    for(let c=0; c<cols; c++) {
+                        if(chance(0.5)) {
+                            ctx.fillStyle = chance(0.2) ? '#66fcf1' : '#1a4440';
+                            ctx.fillRect(x+2 + c*cw + 1, y+2 + r*ch + 1, cw-2, ch-2);
+                        }
+                    }
+                }
+             });
+        }
+
+        // 10. Shield Emitter
+        function drawShieldEmitter(ctx, x, y, w, h) {
+            safeDraw(ctx, x, y, w, h, () => {
+                drawPlate(ctx, x, y, w, h, true);
+                const cx = x + w/2;
+                const cy = y + h/2;
+                const r = Math.min(w,h) * 0.4;
+                
+                // Glowy Center
+                const grad = ctx.createRadialGradient(cx, cy, 1, cx, cy, r);
+                grad.addColorStop(0, '#fff');
+                grad.addColorStop(0.2, '#66fcf1');
+                grad.addColorStop(1, '#000');
+                
+                ctx.fillStyle = grad;
+                ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.fill();
+                
+                // Emitter prongs
+                ctx.strokeStyle = '#555';
+                ctx.lineWidth = 2;
+                for(let i=0; i<4; i++) {
+                    const ang = (Math.PI/2) * i;
+                    ctx.beginPath();
+                    ctx.moveTo(cx + Math.cos(ang)*r*0.5, cy + Math.sin(ang)*r*0.5);
+                    ctx.lineTo(cx + Math.cos(ang)*r*1.2, cy + Math.sin(ang)*r*1.2);
+                    ctx.stroke();
+                }
+            });
+        }
+
+        // --- PREVIOUS GREEBLES (RETAINED) ---
+        function drawRivets(ctx, x, y, w, h) {
+            const size = Math.max(1, Math.min(w, h) * 0.04); 
+            const padding = Math.max(2, size * 1.5);
+            ctx.fillStyle = 'rgba(0,0,0,0.6)';
+            const pat = randInt(0, 3);
+            if (pat === 0) {
+                ctx.fillRect(x + padding, y + padding, size, size);
+                ctx.fillRect(x + w - padding - size, y + padding, size, size);
+                ctx.fillRect(x + w - padding - size, y + h - padding - size, size, size);
+                ctx.fillRect(x + padding, y + h - padding - size, size, size);
+            } else if (pat === 1) {
+                const spacing = Math.max(size * 3, w / 6);
+                for(let i=padding; i<w-padding; i+=spacing) {
+                    ctx.fillRect(x + i, y + padding, size, size);
+                    ctx.fillRect(x + i, y + h - padding - size, size, size);
+                }
+            } else {
+                const spacing = Math.max(size * 3, h / 6);
+                for(let i=padding; i<h-padding; i+=spacing) {
+                    ctx.fillRect(x + padding, y + i, size, size);
+                    ctx.fillRect(x + w - padding - size, y + i, size, size);
+                }
+            }
+        }
+        function drawSurfaceScoring(ctx, x, y, w, h) {
+            safeDraw(ctx, x, y, w, h, () => {
+                ctx.strokeStyle = `rgba(0,0,0,${config.roughness * 0.5})`;
+                ctx.lineWidth = 1;
+                const type = randInt(0, 5);
+                if (type === 0) {
+                    const count = randInt(2, 5);
+                    for(let i=0; i<count; i++) {
+                        ctx.beginPath();
+                        const sx = x + rand(0, w); const sy = y + rand(0, h);
+                        ctx.moveTo(sx, sy); ctx.lineTo(sx + rand(-10, 10), sy + rand(-10, 10)); ctx.stroke();
+                    }
+                } else if (type === 1) {
+                    const inset = w * 0.2;
+                    ctx.beginPath();
+                    if (chance(0.5)) { ctx.moveTo(x + inset, y); ctx.lineTo(x, y + inset); } 
+                    else { ctx.moveTo(x + w - inset, y + h); ctx.lineTo(x + w, y + h - inset); }
+                    ctx.stroke();
+                } else if (type === 2) {
+                    const cx = x + w/2 + rand(-w*0.2, w*0.2);
+                    const cy = y + h/2 + rand(-h*0.2, h*0.2);
+                    const len = Math.min(w,h) * 0.15;
+                    ctx.beginPath(); ctx.moveTo(cx - len, cy); ctx.lineTo(cx + len, cy);
+                    ctx.moveTo(cx, cy - len); ctx.lineTo(cx, cy + len); ctx.stroke();
+                } else {
+                    ctx.fillStyle = 'rgba(255,255,255,0.05)';
+                    ctx.fillRect(x + w*0.1, y + h*0.8, w*0.3, h*0.1);
+                }
+            });
+        }
+        function drawAlienText(ctx, x, y, w, h) {
+            safeDraw(ctx, x, y, w, h, () => {
+                const rows = Math.max(1, Math.floor(h / 5));
+                ctx.fillStyle = getColor(20);
+                const startY = y + rand(2, h/2);
+                for(let r=0; r<rows; r++) {
+                    if(chance(0.6)) continue;
+                    let cx = x + 4;
+                    const cy = startY + r*5;
+                    if (cy > y+h-4) break;
+                    while(cx < x + w - 4) {
+                        const rw = randInt(2, 8);
+                        if (cx + rw > x + w - 4) break;
+                        ctx.fillRect(cx, cy, rw, 2);
+                        cx += rw + 3;
+                    }
+                }
+            });
+        }
+        function drawTechCluster(ctx, x, y, w, h) {
+            safeDraw(ctx, x, y, w, h, () => {
+                drawPlate(ctx, x, y, w, h, false);
+                const gridSize = 4;
+                const rows = Math.floor((h-2) / gridSize);
+                const cols = Math.floor((w-2) / gridSize);
+                for(let r=0; r<rows; r++) {
+                    for(let c=0; c<cols; c++) {
+                        const gx = x + 1 + c*gridSize;
+                        const gy = y + 1 + r*gridSize;
+                        if (chance(config.complexity)) {
+                            const type = randInt(0, 4);
+                            if (type === 0) { ctx.fillStyle = getColor(10); ctx.fillRect(gx+1, gy+1, 2, 2); } 
+                            else if (type === 1) { ctx.fillStyle = '#111'; ctx.fillRect(gx, gy, 3, 3); } 
+                            else if (type === 2) { if (chance(0.2)) { ctx.fillStyle = '#ff9900'; ctx.fillRect(gx+1, gy+1, 1, 1); } }
+                        }
+                    }
+                }
+            });
+        }
+        function drawDataStream(ctx, x, y, w, h) {
+             safeDraw(ctx, x, y, w, h, () => {
+                drawPlate(ctx, x, y, w, h, false);
+                ctx.fillStyle = '#000'; ctx.fillRect(x+2, y+2, w-4, h-4);
+                const isVert = h > w;
+                const bands = isVert ? Math.floor(w/4) : Math.floor(h/4);
+                for(let i=0; i<bands; i++) {
+                    if (chance(0.5)) continue;
+                    const offset = i*4;
+                    const length = rand(0.3, 0.9);
+                    ctx.fillStyle = chance(0.8) ? '#003333' : '#66fcf1';
+                    if (isVert) { ctx.fillRect(x + offset + 2, y + 2, 2, (h-4) * length); } 
+                    else { ctx.fillRect(x + 2, y + offset + 2, (w-4) * length, 2); }
+                }
+             });
+        }
+        function drawConduitBundle(ctx, x, y, w, h, forceDir = null) {
+            safeDraw(ctx, x, y, w, h, () => {
+                drawPlate(ctx, x, y, w, h, false);
+                const isVert = forceDir !== null ? forceDir : (w < h);
+                const count = randInt(3, 8);
+                const spacing = (isVert ? w : h) / count;
+                ctx.lineWidth = spacing * 0.6; ctx.strokeStyle = getColor(15);
+                for(let i=0; i<count; i++) {
+                    const offset = spacing/2 + (i*spacing);
+                    ctx.beginPath();
+                    if(isVert) { ctx.moveTo(x + offset, y); ctx.lineTo(x + offset, y + h); } 
+                    else { ctx.moveTo(x, y + offset); ctx.lineTo(x + w, y + offset); }
+                    ctx.stroke();
+                }
+            });
+        }
+        function drawAccessHatch(ctx, x, y, w, h) {
+            safeDraw(ctx, x, y, w, h, () => {
+                drawPlate(ctx, x, y, w, h, true);
+                const cx = x + w/2; const cy = y + h/2;
+                const r = Math.min(w,h) * 0.35;
+                ctx.fillStyle = getColor(5); ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(cx, cy, r*0.7, 0, Math.PI*2); ctx.fill();
+                const rot = rand(0, Math.PI);
+                ctx.save(); ctx.translate(cx, cy); ctx.rotate(rot);
+                ctx.strokeStyle = '#888'; ctx.lineWidth = Math.max(1, r*0.1);
+                ctx.beginPath(); ctx.moveTo(-r*0.4, 0); ctx.lineTo(r*0.4, 0);
+                ctx.moveTo(0, -r*0.4); ctx.lineTo(0, r*0.4); ctx.stroke();
+                ctx.restore();
+                if (chance(0.5)) {
+                    ctx.strokeStyle = '#e67e22'; ctx.lineWidth = Math.max(1, r*0.05);
+                    ctx.beginPath(); ctx.arc(cx, cy, r*0.85, 0, Math.PI*2); ctx.stroke();
+                }
+            });
+        }
+        function drawExhaustFan(ctx, x, y, w, h) {
+            safeDraw(ctx, x, y, w, h, () => {
+                drawPlate(ctx, x, y, w, h, true);
+                const cx = x + w/2; const cy = y + h/2;
+                const r = Math.min(w,h) * 0.4;
+                ctx.fillStyle = '#050505'; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.fill();
+                const blades = randInt(3, 7); ctx.fillStyle = '#333';
+                for(let i=0; i<blades; i++) {
+                    ctx.beginPath(); ctx.moveTo(cx, cy);
+                    const ang1 = (Math.PI*2 / blades) * i; const ang2 = ang1 + 0.5;
+                    ctx.arc(cx, cy, r, ang1, ang2); ctx.fill();
+                }
+                ctx.strokeStyle = getColor(20); ctx.lineWidth = 1;
+                const grateCount = 4;
+                for(let i=1; i<grateCount; i++) { ctx.beginPath(); ctx.arc(cx, cy, r*(i/grateCount), 0, Math.PI*2); ctx.stroke(); }
+            });
+        }
+        function drawCurvedPipe(ctx, x, y, w, h, corner) {
+            safeDraw(ctx, x, y, w, h, () => {
+                drawPlate(ctx, x, y, w, h, true, 0);
+                const count = randInt(3, 6);
+                const step = Math.min(w, h) / (count + 2);
+                let cx, cy, sa, ea;
+                if (corner === undefined) corner = randInt(0, 4);
+                if (corner === 0) { cx = x; cy = y; sa = 0; ea = 0.5*Math.PI; } 
+                if (corner === 1) { cx = x+w; cy = y; sa = 0.5*Math.PI; ea = Math.PI; }
+                if (corner === 2) { cx = x+w; cy = y+h; sa = Math.PI; ea = 1.5*Math.PI; }
+                if (corner === 3) { cx = x; cy = y+h; sa = 1.5*Math.PI; ea = 2*Math.PI; }
+                ctx.lineWidth = step * 0.6;
+                for(let i=1; i<=count; i++) {
+                    const r = step * i * 1.5;
+                    if (r > Math.min(w,h) * 1.5) break; 
+                    ctx.strokeStyle = 'rgba(0,0,0,0.6)'; ctx.beginPath(); ctx.arc(cx, cy, r+1, sa, ea); ctx.stroke();
+                    ctx.strokeStyle = getColor(10); ctx.beginPath(); ctx.arc(cx, cy, r, sa, ea); ctx.stroke();
+                }
+            });
+        }
+        function drawVents(ctx, x, y, w, h, isVert) {
+            safeDraw(ctx, x, y, w, h, () => {
+                drawPlate(ctx, x, y, w, h, false);
+                const num = Math.floor((isVert ? h : w) / 3); 
+                if (num < 2) return;
+                const size = (isVert ? h : w) / num;
+                ctx.fillStyle = getColor(5);
+                for(let i=0; i<num; i++) {
+                    const pos = (isVert ? y : x) + (i*size);
+                    if (i%2 !== 0) continue; 
+                    if (isVert) { ctx.fillRect(x+1, pos, w-2, size*0.8); ctx.fillStyle = 'rgba(0,0,0,0.8)'; ctx.fillRect(x+1, pos+size*0.8, w-2, size*0.2); } 
+                    else { ctx.fillRect(pos, y+1, size*0.8, h-2); ctx.fillStyle = 'rgba(0,0,0,0.8)'; ctx.fillRect(pos+size*0.8, y+1, size*0.2, h-2); }
+                    ctx.fillStyle = getColor(5);
+                }
+            });
+        }
+        function drawSensorArray(ctx, x, y, w, h) {
+            safeDraw(ctx, x, y, w, h, () => {
+                drawPlate(ctx, x, y, w, h, true);
+                const cx = x + w/2, cy = y + h/2;
+                const r = Math.min(w, h) * 0.35;
+                ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.fill();
+                const grad = ctx.createRadialGradient(cx-r*0.3, cy-r*0.3, 1, cx, cy, r);
+                grad.addColorStop(0, getColor(15)); grad.addColorStop(1, '#222');
+                ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(cx, cy, r*0.9, 0, Math.PI*2); ctx.fill();
+                ctx.strokeStyle = getColor(40); ctx.lineWidth = 2;
+                const angle = rand(0, Math.PI*2);
+                const nx = cx + Math.cos(angle) * r*1.2; const ny = cy + Math.sin(angle) * r*1.2;
+                ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(nx, ny); ctx.stroke();
+                if (chance(0.3)) { ctx.fillStyle = chance(0.5) ? '#e74c3c' : '#66fcf1'; ctx.beginPath(); ctx.arc(nx, ny, 2, 0, Math.PI*2); ctx.fill(); }
+            });
+        }
+        function drawCylinders(ctx, x, y, w, h) {
+            safeDraw(ctx, x, y, w, h, () => {
+                drawPlate(ctx, x, y, w, h, true);
+                const cols = Math.floor(w / 8); const rows = Math.floor(h / 8);
+                if (cols < 1 || rows < 1) return;
+                const cw = w/cols, ch = h/rows;
+                const r = Math.min(cw, ch) * 0.35;
+                for(let rI=0; rI<rows; rI++) {
+                    for(let cI=0; cI<cols; cI++) {
+                        const cx = x + cI*cw + cw/2; const cy = y + rI*ch + ch/2;
+                        ctx.fillStyle = 'rgba(0,0,0,0.7)'; ctx.beginPath(); ctx.arc(cx+1, cy+1, r, 0, Math.PI*2); ctx.fill();
+                        const grad = ctx.createRadialGradient(cx-r*0.2, cy-r*0.2, 0, cx, cy, r);
+                        grad.addColorStop(0, getColor(20)); grad.addColorStop(1, '#111');
+                        ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.fill();
+                        ctx.fillStyle = getColor(40); ctx.beginPath(); ctx.arc(cx, cy, r*0.3, 0, Math.PI*2); ctx.fill();
+                    }
+                }
+            });
+        }
+        function drawServerBlock(ctx, x, y, w, h) {
+            safeDraw(ctx, x, y, w, h, () => {
+                drawPlate(ctx, x, y, w, h, false);
+                const lines = Math.floor(h / 3);
+                ctx.fillStyle = '#050505'; ctx.fillRect(x+2, y+2, w-4, h-4);
+                for(let i=0; i<lines; i++) {
+                    const ly = y + 3 + i*3;
+                    if (ly > y + h - 3) break;
+                    ctx.fillStyle = getColor(5); ctx.fillRect(x+4, ly, w-8, 1.5);
+                    if (chance(0.6)) {
+                        const lights = randInt(1, 5);
+                        for(let l=0; l<lights; l++) { ctx.fillStyle = chance(0.8) ? '#66fcf1' : '#ff0055'; const lx = x + 4 + randInt(0, w-10); ctx.fillRect(lx, ly, 1.5, 1.5); }
+                    }
+                }
+            });
+        }
+        function drawHexCluster(ctx, x, y, w, h) {
+             safeDraw(ctx, x, y, w, h, () => {
+                drawPlate(ctx, x, y, w, h, true);
+                const hexSize = 6;
+                const dx = hexSize * 1.5; const dy = hexSize * Math.sqrt(3);
+                const drawHex = (hx, hy) => {
+                    ctx.beginPath();
+                    for (let i = 0; i < 6; i++) {
+                        const angle = 2 * Math.PI / 6 * i;
+                        const px = hx + hexSize * 0.8 * Math.cos(angle); const py = hy + hexSize * 0.8 * Math.sin(angle);
+                        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+                    }
+                    ctx.closePath();
+                    ctx.fillStyle = '#111'; ctx.fill(); ctx.strokeStyle = getColor(10); ctx.stroke();
+                };
+                for(let py = y + hexSize; py < y + h - hexSize; py += dy) {
+                    for(let px = x + hexSize; px < x + w - hexSize; px += dx) {
+                        drawHex(px, py);
+                        if (px + dx*0.5 < x + w - hexSize && py + dy*0.5 < y + h - hexSize) { drawHex(px + dx*0.5, py + dy*0.5); }
+                    }
+                }
+             });
+        }
+        function drawBioTank(ctx, x, y, w, h) {
+             safeDraw(ctx, x, y, w, h, () => {
+                drawPlate(ctx, x, y, w, h, true);
+                const pad = 4; const tw = w - pad*2; const th = h - pad*2;
+                ctx.fillStyle = '#001111'; ctx.fillRect(x+pad, y+pad, tw, th);
+                const fill = rand(0.3, 0.9); const liquidY = y + pad + (th * (1-fill));
+                ctx.fillStyle = chance(0.5) ? 'rgba(102, 252, 241, 0.3)' : 'rgba(100, 255, 100, 0.2)';
+                ctx.fillRect(x+pad, liquidY, tw, th * fill);
+                ctx.fillStyle = 'rgba(255,255,255,0.1)'; ctx.fillRect(x+pad, y+pad, tw*0.3, th);
+                ctx.fillStyle = getColor(20); ctx.fillRect(x+pad, y+pad, tw, 3); ctx.fillRect(x+pad, y+h-pad-3, tw, 3);
+             });
+        }
+        function drawPanelCluster(ctx, x, y, w, h, depth) {
+             safeDraw(ctx, x, y, w, h, () => {
+                drawPlate(ctx, x, y, w, h, false, 0);
+                const rows = randInt(2, 5); const cols = randInt(2, 5);
+                const cw = w / cols; const ch = h / rows;
+                for (let r = 0; r < rows; r++) { for (let c = 0; c < cols; c++) { generateGreeble(ctx, x + c * cw, y + r * ch, cw - 1, ch - 1, depth - 1); } }
+             });
+        }
+        function drawComplexTrench(ctx, x, y, w, h, isVert) {
+             safeDraw(ctx, x, y, w, h, () => {
+                drawPlate(ctx, x, y, w, h, false, 0);
+                const gw = isVert ? w * 0.4 : w; const gh = isVert ? h : h * 0.4;
+                const gx = isVert ? x + w * 0.3 : x; const gy = isVert ? y : y + h * 0.3;
+                ctx.fillStyle = '#000'; ctx.fillRect(gx, gy, gw, gh);
+                const detailCount = Math.floor((isVert ? h : w) / 6); 
+                for (let i = 0; i < detailCount; i++) {
+                    const pos = i * 6;
+                    if (chance(0.4)) {
+                        ctx.fillStyle = getColor(10);
+                        if (isVert) ctx.fillRect(x, y + pos, w, 2); else ctx.fillRect(x + pos, y, 2, h);
+                    } else if (chance(0.4)) {
+                        const vx = isVert ? x + w * 0.1 : x + pos + 2; const vy = isVert ? y + pos + 2 : y + h * 0.1;
+                        const vw = isVert ? w * 0.8 : 4; const vh = isVert ? 4 : h * 0.8;
+                        ctx.fillStyle = '#222'; ctx.fillRect(vx, vy, vw, vh);
+                    }
+                }
+             });
+        }
+        function drawDomeWithPipes(ctx, x, y, w, h) {
+             safeDraw(ctx, x, y, w, h, () => {
+                drawPlate(ctx, x, y, w, h, true, 1);
+                const cx = x + w/2, cy = y + h/2;
+                const r = Math.min(w, h) * 0.3;
+                const grad = ctx.createRadialGradient(cx - r * 0.3, cy - r * 0.3, 1, cx, cy, r);
+                grad.addColorStop(0, getColor(30)); grad.addColorStop(1, '#111');
+                ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+                const pipeCount = randInt(4, 12);
+                ctx.strokeStyle = getColor(5); ctx.lineWidth = r * 0.1;
+                for (let i = 0; i < pipeCount; i++) {
+                    const angle = (i / pipeCount) * Math.PI * 2 + rand(0, 1); // Random rot
+                    ctx.beginPath();
+                    ctx.moveTo(cx + Math.cos(angle) * r * 0.8, cy + Math.sin(angle) * r * 0.8);
+                    ctx.lineTo(cx + Math.cos(angle) * r * 2, cy + Math.sin(angle) * r * 2);
+                    ctx.stroke();
+                }
+             });
+        }
+        function drawHazardStripes(ctx, x, y, w, h) {
+            safeDraw(ctx, x, y, w, h, () => {
+                ctx.fillStyle = getColor(-5); ctx.fillRect(x,y,w,h);
+                const style = randInt(0, 3);
+                if (style === 0) ctx.fillStyle = '#b8860b'; 
+                else if (style === 1) ctx.fillStyle = '#8e1c1c'; 
+                else ctx.fillStyle = '#ccc'; 
+                const step = 8 + randInt(0, 8);
+                const angle = chance(0.5) ? 1 : -1;
+                if (angle === 1) { for(let i=-h; i<w; i+=step) { ctx.beginPath(); ctx.moveTo(x+i, y); ctx.lineTo(x+i+step/2, y); ctx.lineTo(x+i+step/2 - h, y+h); ctx.lineTo(x+i-h, y+h); ctx.fill(); } } 
+                else { for(let i=0; i<w+h; i+=step) { ctx.beginPath(); ctx.moveTo(x+i, y); ctx.lineTo(x+i+step/2, y); ctx.lineTo(x+i+step/2 + h, y+h); ctx.lineTo(x+i+h, y+h); ctx.fill(); } }
+            });
+        }
+
+
+        // --- RECURSIVE GENERATOR ---
+        
+        function snap(val) { return Math.floor(val); }
+
+        function generateGreeble(ctx, x, y, w, h, depth) {
+            x = snap(x); y = snap(y); w = snap(w); h = snap(h);
+            if (w < 4 || h < 4) return; 
+
+            // STOP CONDITION
+            const complexityFactor = 1.0 - config.complexity; 
+            const stopAndDraw = depth <= 0 || (depth < 6 && chance(0.1 + complexityFactor * 0.2));
+
+            if (stopAndDraw) {
+                const ratio = Math.max(w, h) / Math.min(w, h);
+                const area = w * h;
+
+                // Tiny filler (always plate)
+                if (w < 12 || h < 12) {
+                     drawPlate(ctx, x, y, w, h, true);
+                     drawBorder(ctx, x, y, w, h); // Outline for fillers
+                     return;
+                }
+                
+                // --- INDUSTRIAL FEATURES ---
+                if (chance(config.industrial)) {
+                    // Strips and Pipes
+                    if (ratio > 2.0) {
+                        const type = randInt(0, 10); // More options
+                        const isVert = w < h;
+                        if (type === 0) drawVents(ctx, x, y, w, h, isVert);
+                        else if (type === 1) drawComplexTrench(ctx, x, y, w, h, isVert);
+                        else if (type === 2) drawConduitBundle(ctx, x, y, w, h, isVert);
+                        else if (type === 3) drawHazardStripes(ctx, x, y, w, h);
+                        else if (type === 4) drawDataStream(ctx, x, y, w, h);
+                        else if (type === 5) drawCoolingFins(ctx, x, y, w, h);
+                        else if (type === 6) drawWarningChevrons(ctx, x, y, w, h);
+                        else drawCurvedPipe(ctx, x, y, w, h, randInt(0, 4));
+                        drawBorder(ctx, x, y, w, h); // Outline
+                        return;
+                    } 
+                    // Boxy Industrial
+                    if (area > 400 && chance(0.7)) {
+                         const roll = rand(0, 100);
+                         if (roll < 20) drawExhaustFan(ctx, x, y, w, h);
+                         else if (roll < 40) drawAccessHatch(ctx, x, y, w, h);
+                         else if (roll < 60) drawBioTank(ctx, x, y, w, h);
+                         else if (roll < 75) drawPressureValves(ctx, x, y, w, h);
+                         else if (roll < 85) drawVentLatches(ctx, x, y, w, h);
+                         else drawPanelCluster(ctx, x, y, w, h, depth);
+                         drawBorder(ctx, x, y, w, h); // Outline
+                         return;
+                    }
+                }
+
+                // --- TECH FEATURES ---
+                if (ratio < 1.5 && area > 200 && chance(config.complexity)) {
+                    // Blocky Tech
+                    const roll = rand(0, 100);
+                    if (roll < 10) drawPanelCluster(ctx, x, y, w, h, depth); 
+                    else if (roll < 20) drawTechCluster(ctx, x, y, w, h);
+                    else if (roll < 30) drawDomeWithPipes(ctx, x, y, w, h);
+                    else if (roll < 40) drawCylinders(ctx, x, y, w, h);
+                    else if (roll < 50) drawSensorArray(ctx, x, y, w, h);
+                    else if (roll < 60) drawHexCluster(ctx, x, y, w, h);
+                    else if (roll < 70) drawEnergyCoil(ctx, x, y, w, h);
+                    else if (roll < 75) drawRadarDish(ctx, x, y, w, h);
+                    else if (roll < 80) drawIsolineMap(ctx, x, y, w, h);
+                    else if (roll < 85) drawLogicGate(ctx, x, y, w, h);
+                    else if (roll < 90) drawDataMatrix(ctx, x, y, w, h);
+                    else if (roll < 95) drawShieldEmitter(ctx, x, y, w, h);
+                    else drawServerBlock(ctx, x, y, w, h);
+                    drawBorder(ctx, x, y, w, h); // Outline
+                    return;
+                }
+
+                drawPlate(ctx, x, y, w, h, true, 1);
+                drawBorder(ctx, x, y, w, h); // Outline for generic plates
+                return;
+            }
+
+            // --- RECURSIVE SPLIT (BSP) ---
+            const splitHoriz = chance(0.5);
+            const splitAt = 0.3 + (Math.random() * 0.4); 
+            const gap = 1;
+
+            if (splitHoriz) {
+                const h1 = snap(h * splitAt);
+                const h2 = h - h1 - gap;
+                if (h1 > 3 && h2 > 3) {
+                    generateGreeble(ctx, x, y, w, h1, depth - 1);
+                    generateGreeble(ctx, x, y + h1 + gap, w, h2, depth - 1);
+                } else {
+                     drawPlate(ctx, x, y, w, h, true);
+                     drawBorder(ctx, x, y, w, h);
+                }
+            } else {
+                const w1 = snap(w * splitAt);
+                const w2 = w - w1 - gap;
+                if (w1 > 3 && w2 > 3) {
+                    generateGreeble(ctx, x, y, w1, h, depth - 1);
+                    generateGreeble(ctx, x + w1 + gap, y, w2, h, depth - 1);
+                } else {
+                     drawPlate(ctx, x, y, w, h, true);
+                     drawBorder(ctx, x, y, w, h);
+                }
+            }
+        }
+
+        function renderScene(targetCanvas = canvas, width, height) {
+            if (!targetCanvas) return;
+            const tCtx = targetCanvas.getContext('2d');
+            
+            // Handle scale
+            targetCanvas.width = width;
+            targetCanvas.height = height;
+            
+            // Background
+            tCtx.fillStyle = config.brightness > 50 ? '#222' : '#0b0c10';
+            tCtx.fillRect(0, 0, width, height);
+
+            const tileSize = config.scale;
+            const cols = Math.ceil(width / tileSize);
+            const rows = Math.ceil(height / tileSize);
+
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    const x = c * tileSize;
+                    const y = r * tileSize;
+                    const w = tileSize - 1;
+                    const h = tileSize - 1;
+                    
+                    // Depth randomization based on scale
+                    let baseDepth = config.depth;
+                    if (config.scale > 100) baseDepth += 1;
+                    
+                    const tileDepth = Math.max(3, baseDepth + randInt(-1, 2));
+                    generateGreeble(tCtx, x, y, w, h, tileDepth);
+                }
+            }
+        }
+
+        // --- TRANSITION SYSTEM ---
+
+        function triggerRegen() {
+            if (isTransitioning || !canvas || !wrapper) return;
+            isTransitioning = true;
+            
+            wrapper.classList.add('fade-out');
+
+            setTimeout(() => {
+                const rect = wrapper.getBoundingClientRect();
+                const dpr = window.devicePixelRatio || 1;
+                renderScene(canvas, rect.width * dpr, rect.height * dpr);
+                canvas.style.width = `${rect.width}px`;
+                canvas.style.height = `${rect.height}px`;
+
+                wrapper.classList.remove('fade-out');
+                isTransitioning = false;
+            }, 400); 
+            
+            // Apply CRT state
+            if (crtLayer) {
+                if (config.crt) crtLayer.classList.remove('disabled');
+                else crtLayer.classList.add('disabled');
+            }
+        }
+
+        function randomizeSettings() {
+            config.scale = randInt(80, 200); 
+            config.depth = randInt(5, 8);   
+            config.complexity = rand(0.7, 1.0);
+            config.industrial = rand(0.3, 0.8);
+            config.microDetail = rand(0.8, 1.0);
+            config.roughness = rand(0.2, 0.6);
+            config.colorVariance = rand(0.4, 0.8);
+            config.outlineWidth = chance(0.5) ? 0 : rand(0.1, 0.4);
+            config.crt = chance(0.8); // 80% chance to be on
+            
+            config.hue = chance(0.8) ? 210 : randInt(0, 360);
+            config.shadow = rand(0.5, 0.9);
+            config.brightness = randInt(20, 50);
+
+            syncInputs();
+            triggerRegen();
+        }
+
+        // --- EXPORT 4K ---
+        function exportWallpaper() {
+            const btn = document.getElementById('btn-export');
+            const originalText = btn.innerText;
+            btn.innerText = "RENDERING 4K...";
+            
+            setTimeout(() => {
+                const offCanvas = document.createElement('canvas');
+                renderScene(offCanvas, 3840, 2160);
+                
+                const link = document.createElement('a');
+                link.download = `DS1-X-Surface-4K-${Date.now()}.png`;
+                link.href = offCanvas.toDataURL('image/png', 0.9);
+                link.click();
+                
+                btn.innerText = originalText;
+            }, 100);
+        }
+
+        // --- INTERACTION ---
+
+        function bindInput(id, key, isInt = false) {
+            const el = document.getElementById(id);
+            if (!el) {
+                console.warn(`Element with id '${id}' not found for binding.`);
+                return;
+            }
+            const valEl = document.getElementById(id.replace('inp', 'val'));
+            
+            el.addEventListener('input', (e) => {
+                let val = isInt ? parseInt(e.target.value) : parseFloat(e.target.value);
+                
+                if (['complexity', 'industrial', 'roughness', 'shadow', 'brightness', 'microDetail', 'colorVariance'].includes(key)) {
+                    if (key === 'brightness') config[key] = val;
+                    else config[key] = val / 100;
+                } else if (key === 'outlineWidth') {
+                    config[key] = val; 
+                } else {
+                    config[key] = val;
+                }
+
+                if (valEl) {
+                    if (['complexity', 'industrial', 'roughness', 'shadow', 'brightness', 'microDetail', 'colorVariance'].includes(key)) valEl.innerText = val + '%';
+                    else if (key === 'interval') valEl.innerText = val + ' sec';
+                    else if (key === 'outlineWidth') valEl.innerText = val + 'px';
+                    else if (key === 'depth') {
+                        const labels = ["Low", "Med", "High", "Ultra", "Mega", "Giga", "Terra", "Peta"];
+                        valEl.innerText = labels[val-1] || val;
+                    }
+                    else valEl.innerText = val;
+                }
+
+                if (key !== 'autoAdvance' && key !== 'interval') triggerRegen();
+                if (key === 'autoAdvance' || key === 'interval') handleAutoAdvance();
+            });
+        }
+        
+        function handleCrtToggle() {
+            const el = document.getElementById('inp-crt');
+            if(!el) return;
+            config.crt = el.checked;
+            // Direct DOM manipulation for instant feedback without regen
+            if (config.crt) crtLayer.classList.remove('disabled');
+            else crtLayer.classList.add('disabled');
+        }
+
+        function syncInputs() {
+            // Safety check for all inputs before setting values
+            const setVal = (id, val) => { const el = document.getElementById(id); if(el) el.value = val; };
+            const setText = (id, txt) => { const el = document.getElementById(id); if(el) el.innerText = txt; };
+
+            setVal('inp-scale', config.scale);
+            setText('val-scale', config.scale);
+            
+            setVal('inp-depth', config.depth);
+            const labels = ["Low", "Med", "High", "Ultra", "Mega", "Giga", "Terra", "Peta"];
+            setText('val-depth', labels[config.depth-1] || config.depth);
+
+            setVal('inp-complexity', Math.floor(config.complexity * 100));
+            setText('val-complexity', Math.floor(config.complexity * 100) + '%');
+
+            setVal('inp-industrial', Math.floor(config.industrial * 100));
+            setText('val-industrial', Math.floor(config.industrial * 100) + '%');
+
+            setVal('inp-roughness', Math.floor(config.roughness * 100));
+            setText('val-roughness', Math.floor(config.roughness * 100) + '%');
+            
+            setVal('inp-micro', Math.floor(config.microDetail * 100));
+            setText('val-micro', Math.floor(config.microDetail * 100) + '%');
+
+            setVal('inp-variance', Math.floor(config.colorVariance * 100));
+            setText('val-variance', Math.floor(config.colorVariance * 100) + '%');
+
+            setVal('inp-shadow', Math.floor(config.shadow * 100));
+            setText('val-shadow', Math.floor(config.shadow * 100) + '%');
+
+            setVal('inp-outline', config.outlineWidth);
+            setText('val-outline', config.outlineWidth + 'px');
+            
+            const crtEl = document.getElementById('inp-crt');
+            if(crtEl) crtEl.checked = config.crt;
+
+            setVal('inp-bright', config.brightness);
+            setText('val-bright', config.brightness + '%');
+
+            setVal('inp-hue', config.hue);
+            setText('val-hue', config.hue);
+        }
+
+        function handleAutoAdvance() {
+            const autoEl = document.getElementById('inp-auto');
+            const intEl = document.getElementById('inp-interval');
+            
+            if (!autoEl || !intEl) return;
+            
+            const enabled = autoEl.checked;
+            config.interval = parseInt(intEl.value);
+            
+            if (autoTimer) clearInterval(autoTimer);
+            
+            if (autoIndicator) autoIndicator.classList.toggle('visible', enabled);
+
+            if (enabled) {
+                // FORCE minimum 1000ms to prevent browser throttling issues or NaN/0 glitches
+                const ms = Math.max(1000, (config.interval || 3) * 1000);
+                
+                autoTimer = setInterval(() => {
+                    randomizeSettings();
+                }, ms);
+            }
+        }
+
+        // --- INIT ---
+        function init() {
+            // Init DOM elements
+            canvas = document.getElementById('surface');
+            ctx = canvas.getContext('2d');
+            wrapper = document.getElementById('canvas-wrapper');
+            menuPanel = document.getElementById('settings-panel');
+            menuToggle = document.getElementById('menu-toggle');
+            autoIndicator = document.getElementById('auto-indicator');
+            loader = document.getElementById('loader');
+            crtLayer = document.getElementById('crt-layer');
+
+            // Bind inputs safely
+            bindInput('inp-scale', 'scale', true);
+            bindInput('inp-depth', 'depth', true);
+            bindInput('inp-complexity', 'complexity', true);
+            bindInput('inp-industrial', 'industrial', true);
+            bindInput('inp-roughness', 'roughness', true);
+            bindInput('inp-micro', 'microDetail', true);
+            bindInput('inp-variance', 'colorVariance', true);
+            bindInput('inp-outline', 'outlineWidth', false);
+            bindInput('inp-shadow', 'shadow', true);
+            bindInput('inp-bright', 'brightness', true);
+            bindInput('inp-hue', 'hue', true);
+            bindInput('inp-interval', 'interval', true);
+            
+            // Other listeners
+            const crtEl = document.getElementById('inp-crt');
+            if(crtEl) crtEl.addEventListener('change', handleCrtToggle);
+            
+            const autoEl = document.getElementById('inp-auto');
+            if(autoEl) autoEl.addEventListener('change', handleAutoAdvance);
+            
+            const randBtn = document.getElementById('btn-random');
+            if(randBtn) randBtn.addEventListener('click', randomizeSettings);
+            
+            const resetBtn = document.getElementById('btn-reset');
+            if(resetBtn) resetBtn.addEventListener('click', () => {
+                config = { ...DEFAULTS };
+                syncInputs();
+                if(autoEl) autoEl.checked = false;
+                handleAutoAdvance();
+                triggerRegen();
+            });
+
+            const exportBtn = document.getElementById('btn-export');
+            if(exportBtn) exportBtn.addEventListener('click', exportWallpaper);
+
+            if(menuToggle) {
+                menuToggle.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if(menuPanel) menuPanel.classList.toggle('open');
+                    menuToggle.classList.toggle('active');
+                });
+            }
+
+            // Global listeners
+            document.addEventListener('click', (e) => {
+                if (menuPanel && menuPanel.classList.contains('open') && !menuPanel.contains(e.target) && e.target !== menuToggle) {
+                    menuPanel.classList.remove('open');
+                    if(menuToggle) menuToggle.classList.remove('active');
+                } else if (menuPanel && !menuPanel.classList.contains('open') && !e.target.closest('button') && !e.target.closest('input')) {
+                    randomizeSettings();
+                }
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    if(menuPanel) menuPanel.classList.remove('open');
+                    if(menuToggle) menuToggle.classList.remove('active');
+                }
+            });
+
+            window.addEventListener('resize', () => triggerRegen());
+
+            // Start
+            setTimeout(() => {
+                if(loader) loader.classList.add('hidden');
+            }, 800);
+            
+            syncInputs();
+            randomizeSettings();
+        }
+
+        // Initialize when DOM is ready
+        window.onload = init;
+
+    </script>
+</body>
+</html>
